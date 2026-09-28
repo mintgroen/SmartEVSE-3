@@ -3167,7 +3167,7 @@ void setup() {
    
     // Uart 1 is used for Modbus @ 9600 8N1
     RTUutils::prepareHardwareSerial(Serial1);
-    Serial1.begin(MODBUS_BAUDRATE, SERIAL_8N1, PIN_RS485_RX, PIN_RS485_TX);
+    Serial1.begin(MODBUS_BAUDRATE, SERIAL_8E1, PIN_RS485_RX, PIN_RS485_TX);
 
    
     //Check type of calibration value used to characterize ADC
