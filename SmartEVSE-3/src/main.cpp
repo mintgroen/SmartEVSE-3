@@ -803,7 +803,7 @@ char IsCurrentAvailable(void) {
     // Allow solar Charging if surplus current is above 'StartCurrent' (sum of all phases)
     // Charging will start after the timeout (chargedelay) period has ended
      // Only when StartCurrent configured or Node MinCurrent detected or Node inactive
-    if (Mode == MODE_SOLAR) {                                                   // no active EVSE yet?
+    if (Mode == MODE_SOLAR && AccessStatus != OFF) {                            // no active EVSE yet?
         if (ActiveEVSE == 0 && Isum >= ((signed int)StartCurrent *-10)) {
             _LOG_D("No current available StartCurrent line %d. ActiveEVSE=%u, TotalCurrent=%d.%dA, StartCurrent=%uA, Isum=%d.%dA, ImportCurrent=%uA.\n", __LINE__, ActiveEVSE, TotalCurrent/10, abs(TotalCurrent%10), StartCurrent, Isum/10, abs(Isum%10), ImportCurrent);
             return 0;
@@ -1050,7 +1050,7 @@ void CalcBalancedCurrent(char mod) {
             // ############### shortage of power  #################
 
             IsetBalanced = ActiveEVSE * MinCurrent * 10;                        // retain old software behaviour: set minimal "MinCurrent" charge per active EVSE
-            if (Mode == MODE_SOLAR) {
+            if (Mode == MODE_SOLAR && AccessStatus != OFF) {
                 // ----------- Check to see if we have to continue charging on solar power alone ----------
                                               // Importing too much?
                 if (ActiveEVSE && IsumImport > 0 &&
@@ -1171,7 +1171,7 @@ void CalcBalancedCurrent(char mod) {
             if ((BalancedState[n] == STATE_C) && (!CurrentSet[n])) {            
 
                 // Check for EVSE's that are starting with Solar charging
-                if ((Mode == MODE_SOLAR) && (Node[n].IntTimer < SOLARSTARTTIME)) {
+                if ((Mode == MODE_SOLAR && AccessStatus != OFF) && (Node[n].IntTimer < SOLARSTARTTIME)) {
                     Balanced[n] = MinCurrent * 10;                              // Set to MinCurrent
                     _LOG_V("[S]Node %u = %u.%u A\n", n, Balanced[n]/10, Balanced[n]%10);
                     CurrentSet[n] = 1;                                          // mark this EVSE as set.
