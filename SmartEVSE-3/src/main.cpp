@@ -981,7 +981,7 @@ void CalcBalancedCurrent(char mod) {
         }
         _LOG_V("Checkpoint 2 Isetbalanced=%d.%d A, Idifference=%d.%d, mod=%u.\n", IsetBalanced/10, abs(IsetBalanced%10), Idifference/10, abs(Idifference%10), mod);
 
-        if (Mode == MODE_SOLAR)                                                 // Solar version
+        if (Mode == MODE_SOLAR && AccessStatus != OFF)                          // Solar version (fallback to Smart if Master is OFF)
         {
             IsumImport = Isum - (10 * ImportCurrent);                           // Allow Import of power from the grid when solar charging
             // when there is NO charging, do not change the setpoint (IsetBalanced); except when we are in Master/Slave configuration
