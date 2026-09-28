@@ -380,6 +380,11 @@ void requestCurrentMeasurement(uint8_t Meter, uint8_t Address) {
             // Phase 1 power:   Register 0x2004 - 0x2005 (signed)
             ModbusReadInputRequest(Address, 3, 0x2002, 4);
             break;
+        case EM_SAIA_ALD1:
+            // Phase 1 current: Register 36
+            // Phase 1 power: Register 37
+            ModbusReadInputRequest(Address, 3, 36, 2);
+            break;
         default:
             // Read 3 Current values
             requestMeasurement(Meter, Address, EMConfig[Meter].IRegister, 3);

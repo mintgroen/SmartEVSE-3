@@ -1741,6 +1741,7 @@ void requestEnergyMeasurement(uint8_t Meter, uint8_t Address, bool Export) {
             // Note:
             // - Sinotimer uses 16-bit values, except for this measurement it uses 32bit int format
             // fallthrough
+        case EM_SAIA_ALD1:
         case EM_ABB:
             // Note:
             // - ABB uses 64bit values for this register (size 2)
