@@ -259,6 +259,7 @@ uint8_t Meter::receiveCurrentMeasurement(ModBus MB) {
             break;
         }
         case EM_CHINT_1P:
+        case EM_SAIA_ALD1:
         {
             var[0] = decodeMeasurement(buf, 0, EMConfig[Type].IDivisor - 3);
             var[1] = 0;
@@ -298,7 +299,7 @@ uint8_t Meter::receiveCurrentMeasurement(ModBus MB) {
             break;
             
     }
-    if (Type == EM_CHINT_1P) {                                                  // single-phase meter, current and power are returned in one response
+    if (Type == EM_CHINT_1P || Type == EM_SAIA_ALD1) {                          // single-phase meter, current and power are returned in one response
         Power[0] = decodeMeasurement(buf, 1, EMConfig[Type].PDivisor);
         Power[1] = 0;
         Power[2] = 0;
