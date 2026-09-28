@@ -491,7 +491,7 @@ void WriteMultipleItemValueResponse(void) {
     if (ItemID) {
         for (i = 0; i < MB.RegisterCount; i++) {
             value = (MB.Data[i * 2] <<8) | MB.Data[(i * 2) + 1];
-            if (LoadBl > 1 && ((ItemID + i) == MENU_MODE || (ItemID + i) == MENU_START || (ItemID + i) == MENU_STOP || (ItemID + i) == MENU_IMPORT)) {
+            if (LoadBl > 1 && ((ItemID + i) == MENU_MODE || (ItemID + i) == MENU_START || (ItemID + i) == MENU_STOP || (ItemID + i) == MENU_IMPORT || (ItemID + i) == STATUS_MODE || (ItemID + i) == STATUS_SOLAR_TIMER)) {
                 OK += 1;
             } else {
                 OK += setItemValue(ItemID + i, value);
