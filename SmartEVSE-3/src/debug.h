@@ -30,7 +30,7 @@
 //please note that this version will only be displayed with the correct time/date if the program is recompiled
 //so the webserver will show correct version if evse.cpp is recompiled
 //the lcd display will show correct version if glcd.cpp is recompiled
-#define VERSION "v3.6-SAIA-8E1-v0.6.3"
+#define VERSION "v3.6-SAIA-DECOUP-v0.7.0"
 #endif
 
 
