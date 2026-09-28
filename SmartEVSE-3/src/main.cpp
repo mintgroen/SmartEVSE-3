@@ -1877,19 +1877,19 @@ uint8_t processAllNodeStates(uint8_t NodeNr) {
     values[1] = BalancedError[NodeNr];
     // Charge Current
     values[2] = 0;                                                              // This does nothing for Nodes. Currently the Chargecurrent can only be written to the Master
-    // Mode
-    if (Node[NodeNr].Mode != Mode) {
-        regs = 4;
-        write = 1;
-    }    
-    values[3] = Mode;
-    
-    // SolarStopTimer
-    if (abs((int16_t)SolarStopTimer - (int16_t)Node[NodeNr].SolarTimer) > 3) {  // Write SolarStoptimer to Node if time is off by 3 seconds or more.
-        regs = 5;
-        write = 1;
-        values[4] = SolarStopTimer;
-    }    
+//    // Mode
+//    if (Node[NodeNr].Mode != Mode) {
+//        regs = 4;
+//        write = 1;
+//    }    
+//    values[3] = Mode;
+//    
+//    // SolarStopTimer
+//    if (abs((int16_t)SolarStopTimer - (int16_t)Node[NodeNr].SolarTimer) > 3) {  // Write SolarStoptimer to Node if time is off by 3 seconds or more.
+//        regs = 5;
+//        write = 1;
+//        values[4] = SolarStopTimer;
+//    }    
 
     if (write) {
         _LOG_D("processAllNode[%u]States State:%u (%s), BalancedError:%u, Mode:%u, SolarStopTimer:%u\n",NodeNr, BalancedState[NodeNr], StrStateName[BalancedState[NodeNr]], BalancedError[NodeNr], Mode, SolarStopTimer);
