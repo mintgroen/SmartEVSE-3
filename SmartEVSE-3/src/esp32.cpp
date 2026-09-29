@@ -3167,7 +3167,7 @@ void setup() {
    
     // Uart 1 is used for Modbus @ 9600 8N1
     RTUutils::prepareHardwareSerial(Serial1);
-    Serial1.begin(MODBUS_BAUDRATE, SERIAL_8E1, PIN_RS485_RX, PIN_RS485_TX);
+    Serial1.begin(MODBUS_BAUDRATE, SERIAL_8N1, PIN_RS485_RX, PIN_RS485_TX);
 
    
     //Check type of calibration value used to characterize ADC
@@ -3185,6 +3185,11 @@ void setup() {
     read_settings();                                                            // initialize with default data when starting for the first time
     validate_settings();
     ReadRFIDlist();                                                             // Read all stored RFID's from storage
+
+    if (MainsMeter.Type == EM_SAIA_ALD1 || EVMeter.Type == EM_SAIA_ALD1) {
+        Serial1.end();
+        Serial1.begin(MODBUS_BAUDRATE, SERIAL_8E1, PIN_RS485_RX, PIN_RS485_TX);
+    }                                                             // Read all stored RFID's from storage
 
     // Note that LittleFS is also used by OCPP
     if(!LittleFS.begin(true)) {
