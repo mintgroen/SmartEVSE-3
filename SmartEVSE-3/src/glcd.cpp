@@ -1341,16 +1341,14 @@ void GLCDMenu(uint8_t Buttons) {
                 value = getItemValue(LCDNav);
                 switch (LCDNav) {
                     case MENU_MAINSMETER:
-                        do {
-                            value = MenuNavInt(Buttons, value, MenuStr[LCDNav].Min, MenuStr[LCDNav].Max);
-                        } while (value == EM_UNUSED_SLOT4);
+                        value = MenuNavInt(Buttons, value, MenuStr[LCDNav].Min, MenuStr[LCDNav].Max);
                         setItemValue(LCDNav, value);
                         break;
                     case MENU_CIRCUITMETER:                                     // do not display the Sensorbox or unused slots here
                     case MENU_EVMETER:                                          // do not display the Sensorbox or unused slots here
                         do {
                             value = MenuNavInt(Buttons, value, MenuStr[LCDNav].Min, MenuStr[LCDNav].Max);
-                        } while (value == EM_SENSORBOX || value == EM_UNUSED_SLOT4);
+                        } while (value == EM_SENSORBOX);
                         setItemValue(LCDNav, value);
                         break;
                     case MENU_EVMETERHOST:
