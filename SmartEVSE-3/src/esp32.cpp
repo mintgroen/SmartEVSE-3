@@ -3186,7 +3186,7 @@ void setup() {
     validate_settings();
     ReadRFIDlist();                                                             // Read all stored RFID's from storage
 
-    if (MainsMeter.Type == EM_SAIA_ALD1 || EVMeter.Type == EM_SAIA_ALD1) {
+    if (MainsMeter.Type == EM_SAIA_ALD1 || EVMeter.Type == EM_SAIA_ALD1 || CircuitMeter.Type == EM_SAIA_ALD1) {
         Serial1.end();
         Serial1.begin(MODBUS_BAUDRATE, SERIAL_8E1, PIN_RS485_RX, PIN_RS485_TX);
     }                                                             // Read all stored RFID's from storage
