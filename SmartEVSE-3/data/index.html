@@ -196,7 +196,7 @@
 
               // Initialize at page load
               // value 0 = no override
-              if(data.evse.loadbl < 2) {
+              if(data.evse.loadbl < 2 || data.evse.loadbl == 9) {
                 $('#mode_override_current').append($('<option>', {
                     value: 0,
                     text: 'no override'
@@ -256,7 +256,24 @@
               $('#mqtt_config').hide();
             }
 
-            if(data.evse.loadbl > 1) {
+            if(data.evse.loadbl == 9) {
+              $('[id=loadbl]').show();
+              $('[id=loadbl_text]').hide();
+              $('[id=loadbl_node]').text("Listen Node 1");
+              $('[id=contactor2]').hide();
+              $('[id=mode_2]').show();
+              $('[id=mode_3]').show();
+              if(data.mode_id == 2) { //SOLAR MODE
+                $('.with_solar').show();
+                $('[id=override_current_box]').hide();
+                $('[id=override_current_box2]').hide();
+              } else {
+                $('.with_solar').hide();
+                $('[id=override_current_box]').show();
+                $('[id=override_current_box2]').show();
+              }
+              $('[id=form_pwm] :input').prop('disabled',false);
+            } else if(data.evse.loadbl > 1) {
               $('[id=loadbl]').show();
               $('[id=loadbl_text]').show();
               $('[id=loadbl_node]').text("Slave Node "+(data.evse.loadbl-1));
