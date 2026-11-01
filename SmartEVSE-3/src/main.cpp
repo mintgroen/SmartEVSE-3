@@ -836,10 +836,10 @@ char IsCurrentAvailable(void) {
     } //else
         //printf("@MSG: Current available MaxCircuit line %d. ActiveEVSE=%u, Baseload_Circuit=%d.%dA, MinCurrent=%uA, MaxCircuit=%uA.\n", __LINE__, ActiveEVSE, Baseload_Circuit/10, abs(Baseload_Circuit%10), MinCurrent, MaxCircuit);
 
-    // When PowerSharing is disabled (LoadBl == 0) set correct nr of Phases
-    // When using PowerSharing, we do not know the configuration of the nodes, assume 1 Phase
+    // When PowerSharing is disabled (LoadBl == 0) or Listen Node (LoadBl == 9) set correct nr of Phases
+    // When using standard PowerSharing, we do not know the configuration of the nodes, assume 1 Phase
     uint8_t Phases = 1;
-    if (LoadBl == 0) Phases = Force_Single_Phase_Charging() ? 1 : 3;
+    if (LoadBl == 0 || LoadBl == 9) Phases = Force_Single_Phase_Charging() ? 1 : 3;
     if (Mode != MODE_NORMAL && MaxSumMains && ((Phases * ActiveEVSE * MinCurrent * 10) + Isum > MaxSumMains * 10)) {
         //printf("@MSG: No current available MaxSumMains line %d. ActiveEVSE=%u, MinCurrent=%uA, Isum=%d.%dA, MaxSumMains=%uA.\n", __LINE__, ActiveEVSE, MinCurrent, Isum/10, abs(Isum%10), MaxSumMains);
         return 0;                                                           // Not enough current available!, return with error
@@ -2410,10 +2410,10 @@ void Timer10ms_singlerun(void) {
             else ChargeCurrent = MinCurrent * 10;                           // Instead use new variable ChargeCurrent
 
             // Load Balancing : Node
-            if (LoadBl > 1) {                                               // Send command to Master, followed by Max Charge Current
+            if (LoadBl > 1 && LoadBl != 9) {                                // Send command to Master, followed by Max Charge Current
                 setState(STATE_COMM_B);                                     // Node wants to switch to State B
 
-            // Load Balancing: Master or Disabled
+            // Load Balancing: Master or Disabled or Listen Node
             } else if (IsCurrentAvailable()) {
                 BalancedMax[0] = MaxCapacity * 10;
                 Balanced[0] = ChargeCurrent;                                // Set pilot duty cycle to ChargeCurrent (v2.15)
@@ -2453,10 +2453,10 @@ void Timer10ms_singlerun(void) {
                     EVMeter.ResetKwh = 0;                                   // clear flag, will be set when disconnected from EVSE (State A)
                 }
                 // Load Balancing : Node
-                if (LoadBl > 1) {
+                if (LoadBl > 1 && LoadBl != 9) {
                     if (State != STATE_COMM_C) setState(STATE_COMM_C);      // Send command to Master, followed by Charge Current
 
-                // Load Balancing: Master or Disabled
+                // Load Balancing: Master or Disabled or Listen Node
                 } else {
                     BalancedMax[0] = ChargeCurrent;
                     if (IsCurrentAvailable()) {

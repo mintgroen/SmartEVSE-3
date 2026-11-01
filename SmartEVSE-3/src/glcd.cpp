@@ -1035,7 +1035,7 @@ const char * getMenuItemOption(uint8_t nav) {
     const static char StrSolenoid[] = "Solenoid";
     const static char StrMotor[]   = "Motor";
     const static char StrDisabled[] = "Disabled";
-    const static char StrLoadBl[9][9]  = {"Disabled", "Master", "Node 1", "Node 2", "Node 3", "Node 4", "Node 5", "Node 6", "Node 7"};
+    const static char StrLoadBl[10][11] = {"Disabled", "Master", "Node 1", "Node 2", "Node 3", "Node 4", "Node 5", "Node 6", "Node 7", "Listen N1"};
     const static char StrSwitch[8][11] = {"Disabled", "Access B", "Access S", "Sma-Sol B", "Sma-Sol S", "Grid Relay", "Custom B", "Custom S"};
     const static char StrGrid[2][10] = {"4Wire", "3Wire"};
     const static char StrEnabled[] = "Enabled";
@@ -1071,7 +1071,7 @@ const char * getMenuItemOption(uint8_t nav) {
                 return Str;
             } else return StrDisabled;
         case MENU_LOADBL:
-            return StrLoadBl[LoadBl]; //TODO shouldnt this be [value] ?
+            return StrLoadBl[value < 10 ? value : 0];
         case MENU_SUMMAINS:
             if (value)
                 sprintf(Str, "%2u A", value);
@@ -1190,28 +1190,30 @@ uint8_t getMenuItems (void) {
     }
     MenuItems[m++] = MENU_LOADBL;                                               // Load Balance Setting (0:Disable / 1:Master / 2-8:Node)
     if (Mode) {                                                                 // ? Smart or Solar mode?
-        if (LoadBl < 2) {                                                       // - ? Load Balancing Disabled/Master?
-            MenuItems[m++] = MENU_MAINSMETER;                                   // - - Type of Mains electric meter (0: Disabled / Constants EM_*)
-            if (MainsMeter.Type == EM_SENSORBOX) {                              // - - ? Sensorbox?
-                if (GridActive == 1) MenuItems[m++] = MENU_GRID;
-                if (SB2.SoftwareVer == 0x01 || SB2.SoftwareVer == 0x03) {
-                    MenuItems[m++] = MENU_SB2_WIFI;                             // Sensorbox-2 Wifi  0:Disabled / 1:Enabled / 2:Portal
+        if (LoadBl < 2 || LoadBl == 9) {                                        // - ? Load Balancing Disabled/Master/Listen?
+            if (LoadBl < 2) {
+                MenuItems[m++] = MENU_MAINSMETER;                               // - - Type of Mains electric meter (0: Disabled / Constants EM_*)
+                if (MainsMeter.Type == EM_SENSORBOX) {                          // - - ? Sensorbox?
+                    if (GridActive == 1) MenuItems[m++] = MENU_GRID;
+                    if (SB2.SoftwareVer == 0x01 || SB2.SoftwareVer == 0x03) {
+                        MenuItems[m++] = MENU_SB2_WIFI;                         // Sensorbox-2 Wifi  0:Disabled / 1:Enabled / 2:Portal
+                    }
+                } else if (MainsMeter.Type && MainsMeter.Type != EM_API && MainsMeter.Type != EM_HOMEWIZARD) { // - - ? Other?
+                    MenuItems[m++] = MENU_MAINSMETERADDRESS;                    // - - - Address of Mains electric meter (9 - 247)
                 }
-            } else if (MainsMeter.Type && MainsMeter.Type != EM_API && MainsMeter.Type != EM_HOMEWIZARD) { // - - ? Other?
-                MenuItems[m++] = MENU_MAINSMETERADDRESS;                        // - - - Address of Mains electric meter (9 - 247)
+                if (MainsMeter.Type && MainsMeter.Type == EM_HOMEWIZARD) {                       // - ? EV meter configured?
+                    MenuItems[m++] = MENU_MAINSMETERHOST;                  // - - Device hostname selector for EV electric meter (0: current / 1-9 discovered hostnames)
+                }
+                MenuItems[m++] = MENU_CIRCUITMETER;                             // - - Type of Circuit electric meter (0: Disabled / Constants EM_*)
+                if (CircuitMeter.Type && CircuitMeter.Type != EM_API) {         // - ? Circuit meter configured?
+                    MenuItems[m++] = MENU_CIRCUITMETERADDRESS;                  // - - Address of Circuit electric meter (9 - 247)
+                }
+                if (CircuitMeter.Type && CircuitMeter.Type == EM_HOMEWIZARD) {                       // - ? EV meter configured?
+                    MenuItems[m++] = MENU_CIRCUITMETERHOST;                  // - - Device hostname selector for EV electric meter (0: current / 1-9 discovered hostnames)
+                }
+                if (CircuitMeter.Type || LoadBl == 1)                           // old MaxCircuit behaviour without a CircuitMeter present: we will guard the max the Master gives out!
+                    MenuItems[m++] = MENU_CIRCUIT;                                      // - Max current of the EVSE circuit (A)
             }
-            if (MainsMeter.Type && MainsMeter.Type == EM_HOMEWIZARD) {                           // - ? EV meter configured?
-                MenuItems[m++] = MENU_MAINSMETERHOST;                      // - - Device hostname selector for EV electric meter (0: current / 1-9 discovered hostnames)
-            }
-            MenuItems[m++] = MENU_CIRCUITMETER;                                 // - - Type of Circuit electric meter (0: Disabled / Constants EM_*)
-            if (CircuitMeter.Type && CircuitMeter.Type != EM_API) {             // - ? Circuit meter configured?
-                MenuItems[m++] = MENU_CIRCUITMETERADDRESS;                      // - - Address of Circuit electric meter (9 - 247)
-            }
-            if (CircuitMeter.Type && CircuitMeter.Type == EM_HOMEWIZARD) {                           // - ? EV meter configured?
-                MenuItems[m++] = MENU_CIRCUITMETERHOST;                      // - - Device hostname selector for EV electric meter (0: current / 1-9 discovered hostnames)
-            }
-            if (CircuitMeter.Type || LoadBl == 1)                               // old MaxCircuit behaviour without a CircuitMeter present: we will guard the max the Master gives out!
-                MenuItems[m++] = MENU_CIRCUIT;                                          // - Max current of the EVSE circuit (A)
         }
         MenuItems[m++] = MENU_EVMETER;                                          // - Type of EV electric meter (0: Disabled / Constants EM_*)
         if (EVMeter.Type && EVMeter.Type != EM_API && EVMeter.Type != EM_HOMEWIZARD) {                           // - ? EV meter configured?
@@ -1234,14 +1236,14 @@ uint8_t getMenuItems (void) {
                 MenuItems[m++] = MENU_EMCUSTOM_EREGISTER;                       // - - Starting register for energy of custom electric meter
                 MenuItems[m++] = MENU_EMCUSTOM_EDIVISOR;                        // - - Divisor for energy of custom electric meter
             }
-            if (MainsMeter.Type) {                                              // Mainsmeter is configured and Load Balancing Disabled/Master?
-                MenuItems[m++] = MENU_MAINS;                                    // - Max Mains Amps (hard limit, limited by the MAINS connection) (A) (Mode:Smart/Solar)
-                MenuItems[m++] = MENU_MIN;                                      // - Minimal current the EV is happy with (A) (Mode:Smart/Solar or LoadBl:Master)
-            }
+        }
+        if (MainsMeter.Type || LoadBl == 9) {                                  // Mainsmeter is configured and Load Balancing Disabled/Master/Listen?
+            MenuItems[m++] = MENU_MAINS;                                        // - Max Mains Amps (hard limit, limited by the MAINS connection) (A) (Mode:Smart/Solar)
+            MenuItems[m++] = MENU_MIN;                                          // - Minimal current the EV is happy with (A) (Mode:Smart/Solar or LoadBl:Master)
         }
     }
     MenuItems[m++] = MENU_MAX;                                                  // Max Charge current (A)
-    if (Mode == MODE_SOLAR && LoadBl < 2) {                                     // ? Solar mode and Load Balancing Disabled/Master?
+    if (Mode == MODE_SOLAR && (LoadBl < 2 || LoadBl == 9)) {                    // ? Solar mode and Load Balancing Disabled/Master/Listen?
         MenuItems[m++] = MENU_START;                                            // - Start Surplus Current (A)
         MenuItems[m++] = MENU_STOP;                                             // - Stop time (min)
         MenuItems[m++] = MENU_IMPORT;                                           // - Import Current from Grid (A)

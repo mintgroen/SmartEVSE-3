@@ -158,7 +158,7 @@ const struct {
     {"LOCK",    "Cable locking actuator type",                        0, 2, LOCK},
     {"MIN",     "MIN Charge Current the EV will accept (per phase)",  MIN_CURRENT, 16, MIN_CURRENT},
     {"MAX",     "MAX Charge Current for this EVSE (per phase)",       6, 80, MAX_CURRENT},
-    {"PWR SHARE", "Share Power between multiple SmartEVSEs (2-8)",    0, NR_EVSES, LOADBL},
+    {"PWR SHARE", "Share Power between multiple SmartEVSEs (2-8)",    0, 9, LOADBL},
     {"SWITCH",  "Switch function control on pin SW",                  0, 7, SWITCH},
     {"RCMON",   "Residual Current Monitor on pin RCM",                0, 1, RC_MON},
     {"RFID",    "RFID reader, learn/remove cards",                    0, 6, RFID_READER},

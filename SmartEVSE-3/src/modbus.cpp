@@ -26,6 +26,7 @@
 #include "driver/uart.h"
 #include "modbus.h"
 
+extern bool CPDutyOverride;
 struct ModBus MB;
 
 extern uint16_t Balanced[NR_EVSES];
@@ -443,6 +444,11 @@ void ReadItemValueResponse(void) {
     if (ItemID) {
         for (i = 0; i < MB.RegisterCount; i++) {
             values[i] = getItemValue(ItemID + i);
+            if (LoadBl == 9 && (ItemID + i) == STATUS_STATE) {
+                // For Listen Node: Report STATE_A so Master load-balancer treats Node as inactive
+                // and does not allocate or dictate charge current.
+                values[i] = STATE_A;
+            }
         }
         // ModbusReadInputResponse:
         response.add(MB.Address, MB.Function, (uint8_t)(MB.RegisterCount * 2));
@@ -538,9 +544,11 @@ void HandleModbusRequest(void) {
             case 0x10: // (Write multiple register))
                 // 0x0020: Balance currents
                 if (MB.Register == 0x0020 && LoadBl > 1) {      // Message for Node(s)
-                    Balanced[0] = (MB.Data[(LoadBl - 1) * 2] <<8) | MB.Data[(LoadBl - 1) * 2 + 1];
-                    if (Balanced[0] == 0 && State == STATE_C) setState(STATE_C1);               // tell EV to stop charging if charge current is zero
-                    else if ((State == STATE_B) || (State == STATE_C)) SetCurrent(Balanced[0]); // Set charge current, and PWM output
+                    if (LoadBl != 9) {
+                        Balanced[0] = (MB.Data[(LoadBl - 1) * 2] <<8) | MB.Data[(LoadBl - 1) * 2 + 1];
+                        if (Balanced[0] == 0 && State == STATE_C) setState(STATE_C1);               // tell EV to stop charging if charge current is zero
+                        else if ((State == STATE_B) || (State == STATE_C)) SetCurrent(Balanced[0]); // Set charge current, and PWM output
+                    }
                     MainsMeter.setTimeout(COMM_TIMEOUT);                          // reset 10 second timeout
                     _LOG_V("Broadcast received, Node %.1f A, MainsMeter Irms ", (float) Balanced[0]/10);
 
@@ -554,6 +562,12 @@ void HandleModbusRequest(void) {
                             _LOG_V_NO_FUNC("L%d=%.1fA,", i+1, (float)MainsMeter.Irms[i]/10);
                         }
                         _LOG_V_NO_FUNC("\n");
+                        MainsMeter.CalcImeasured();
+                    }
+
+                    if (LoadBl == 9) {
+                        CalcBalancedCurrent(0);
+                        if ((State == STATE_B || State == STATE_C) && !CPDutyOverride) SetCurrent(Balanced[0]);
                     }
                 } else {
 
@@ -605,7 +619,8 @@ ModbusMessage MBNodeRequest(ModbusMessage request) {
     response.clear(); //clear global response message
 
     // Check if the call is for our current ServerID, or maybe for an old ServerID?
-    if (LoadBl != request.getServerID()) return NIL_RESPONSE;
+    uint8_t serverId = (LoadBl == 9) ? 2 : LoadBl;
+    if (serverId != request.getServerID()) return NIL_RESPONSE;
 
     ModbusDecode( (uint8_t*)request.data(), request.size());
     HandleModbusRequest();
@@ -700,8 +715,9 @@ void ConfigureModbusMode(uint8_t newmode) {
             if (newmode != 255 ) MBclient.end();
             _LOG_A("ConfigureModbusMode1 task free ram: %u\n", uxTaskGetStackHighWaterMark( NULL ));
 
-            // Register worker. at serverID 'LoadBl', all function codes
-            MBserver.registerWorker(LoadBl, ANY_FUNCTION_CODE, &MBNodeRequest);
+            uint8_t serverId = (LoadBl == 9) ? 2 : LoadBl;
+            // Register worker. at serverID 'serverId', all function codes
+            MBserver.registerWorker(serverId, ANY_FUNCTION_CODE, &MBNodeRequest);
             // Also add handler for all broadcast messages from Master.
             MBserver.registerWorker(BROADCAST_ADR, ANY_FUNCTION_CODE, &MBbroadcast);
 
@@ -726,10 +742,11 @@ void ConfigureModbusMode(uint8_t newmode) {
             MBclient.begin(Serial1, 1, (uint32_t)50000U);   // pinning it to core1 reduces modbus problems. Make sure there is 50ms quiet time between messages //TODO howto ensure this in v4?
         }
     } else if (newmode > 1) {
-        // Register worker. at serverID 'LoadBl', all function codes
-        _LOG_A("Registering new LoadBl worker at id %u\n", newmode);
+        uint8_t serverId = (newmode == 9) ? 2 : newmode;
+        // Register worker. at serverID 'serverId', all function codes
+        _LOG_A("Registering new LoadBl worker at id %u\n", serverId);
         LoadBl = newmode;
-        MBserver.registerWorker(newmode, ANY_FUNCTION_CODE, &MBNodeRequest);
+        MBserver.registerWorker(serverId, ANY_FUNCTION_CODE, &MBNodeRequest);
     }
 
 }

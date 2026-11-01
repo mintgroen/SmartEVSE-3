@@ -1103,12 +1103,12 @@ void validate_settings(void) {
         DeleteAllRFID();
         setItemValue(MENU_RFIDREADER, 0);                                       // RFID Reader Disabled
     }
-    if (LoadBl >= 2 && EnableC2 == AUTO) {                                      // AUTO not supported on slaves
+    if (LoadBl >= 2 && LoadBl != 9 && EnableC2 == AUTO) {                      // AUTO not supported on slaves
         EnableC2 = NOT_PRESENT;
     }
 
     // Update master node config; for v4 this is taken care of when receiving the EVMeterType/Address
-    if (LoadBl < 2) {
+    if (LoadBl < 2 || LoadBl == 9) {
         Node[0].EVMeter = EVMeter.Type;
         Node[0].EVAddress = EVMeter.Address;
     }
