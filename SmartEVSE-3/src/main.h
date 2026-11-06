@@ -303,6 +303,8 @@ extern void CalcIsum(void);
 extern void setChargeDelay(uint8_t delay);
 extern int phasesLastUpdate;
 extern bool phasesLastUpdateFlag;
+extern uint8_t MainsPhase;
+extern int16_t GetMainsPhaseCurrent(void);
 
 struct Sensorbox {
     uint8_t SoftwareVer;        // Sensorbox 2 software version
