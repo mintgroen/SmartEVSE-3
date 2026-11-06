@@ -64,6 +64,14 @@ uint16_t GridRelayMaxSumMains = GRID_RELAY_MAX_SUMMAINS;                    // M
                                                                             // When the relay opens its contacts, power will be reduced to 4.2kW
                                                                             // The relay is only allowed on the Master
 bool GridRelayOpen = false;                                                 // The read status of the relay
+uint8_t MainsPhase = 0;                                                      // Grid phase to regulate on: 0 = Auto (3P / highest of L1,L2,L3), 1 = L1, 2 = L2, 3 = L3
+
+int16_t GetMainsPhaseCurrent(void) {
+    if (MainsPhase >= 1 && MainsPhase <= 3) {
+        return MainsMeter.Irms[MainsPhase - 1];
+    }
+    return MainsMeter.Imeasured;
+}
 bool CustomButton = false;                                                  // The status of the custom button
 bool MqttButtonState = false;                                               // The status of the button send via MQTT
 uint16_t MaxCurrent = MAX_CURRENT;                                          // Max Charge current (A)
@@ -820,7 +828,7 @@ char IsCurrentAvailable(void) {
 
     ActiveEVSE++;                                                           // Do calculations with one more EVSE
     if (ActiveEVSE > NR_EVSES) ActiveEVSE = NR_EVSES;
-    Baseload = MainsMeter.Imeasured - TotalCurrent;                         // Calculate Baseload (load without any active EVSE)
+    Baseload = GetMainsPhaseCurrent() - TotalCurrent;                       // Calculate Baseload (load without any active EVSE)
     Baseload_Circuit = CircuitMeter.Imeasured - TotalCurrent;               // Load on the Circuit subpanel excluding any active EVSE
     if (Baseload_Circuit < 0) Baseload_Circuit = 0;                         // so Baseload_Circuit = 0 when no CircuitMeter installed
 
@@ -906,7 +914,7 @@ void CalcBalancedCurrent(char mod) {
     Baseload_Circuit = CircuitMeter.Imeasured - TotalCurrent;                   // Calculate Baseload (load without any active EVSE)
     if (Baseload_Circuit < 0)
         Baseload_Circuit = 0;
-    Baseload = MainsMeter.Imeasured - TotalCurrent;                             // Calculate Baseload (load without any active EVSE)
+    Baseload = GetMainsPhaseCurrent() - TotalCurrent;                           // Calculate Baseload (load without any active EVSE)
 
     // ############### now calculate IsetBalanced #################
 
@@ -949,9 +957,9 @@ void CalcBalancedCurrent(char mod) {
 
         if (LoadBl <= 1 && CircuitMeter.Type)                                   // Conditions in which MaxCircuit has to be considered;
                                                                                 // mode = Smart/Solar so don't test for that
-            Idifference = min((MaxMains * 10) - MainsMeter.Imeasured, (MaxCircuit * 10) - CircuitMeter.Imeasured);
+            Idifference = min((MaxMains * 10) - GetMainsPhaseCurrent(), (MaxCircuit * 10) - CircuitMeter.Imeasured);
         else
-            Idifference = (MaxMains * 10) - MainsMeter.Imeasured;
+            Idifference = (MaxMains * 10) - GetMainsPhaseCurrent();
         int ExcessMaxSumMains = ((MaxSumMains * 10) - Isum);
         if (MaxSumMains) {
             // Use ExcessMaxSumMains as additional per-phase constraint (prevents current fluctuations when CAPACITY is used)

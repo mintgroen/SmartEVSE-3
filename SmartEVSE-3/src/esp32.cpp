@@ -693,6 +693,12 @@ void mqtt_receive_callback(const String topic, const String payload) {
                 EnableC2 = (EnableC2_t) value;
         }
         shadowPrefs.markUShort("EnableC2", &EnableC2);
+    } else if (topic == MQTTprefix + "/Set/MainsPhase") {
+        int phase = payload.toInt();
+        if (phase >= 0 && phase <= 3) {
+            MainsPhase = (uint8_t) phase;
+            shadowPrefs.markUChar("MainsPhase", &MainsPhase);
+        }
     } else if (topic == MQTTprefix + "/Set/RFID") {
         // Accept RFID card via MQTT to start/stop session
         // Payload should be hex string: 12 or 14 characters for 6 or 7 byte UID
@@ -977,6 +983,7 @@ void mqttPublishData() {
         mqPubS("/Access", AccessStatus == OFF ? "Deny" : AccessStatus == ON ? "Allow" : AccessStatus == PAUSE ? "Pause" : "N/A", true, 0);
         mqPubS("/RFID", !RFIDReader ? "Not Installed" : RFIDstatus >= 8 ? "NOSTATUS" : StrRFIDStatusWeb[RFIDstatus], true, 0);
         mqPubS("/EnableC2", StrEnableC2[EnableC2], true, 0);
+        mqPubI("/MainsPhase", MainsPhase, true, 0);
         if (RFIDReader) {
             char buf[15];
             printRFID(buf);
@@ -1223,6 +1230,7 @@ void read_settings() {
         else
             CardOffset = preferences.getUShort("CardOffs16", CARD_OFFSET);
         LoadBl = preferences.getUChar("LoadBl", LOADBL); 
+        MainsPhase = preferences.getUChar("MainsPhase", 0); 
         MaxMains = preferences.getUShort("MaxMains", MAX_MAINS); 
         MaxSumMains = preferences.getUShort("MaxSumMains", MAX_SUMMAINS);
         if (!preferences.isKey("CapacityMode")) {
@@ -1316,6 +1324,7 @@ void write_settings(void) {
     PREFS_PUT_ULONG_IF_CHANGED("DelayedStopTime", DelayedStopTime.epoch2);
     PREFS_PUT_USHORT_IF_CHANGED("DelayedRepeat", DelayedRepeat);
     PREFS_PUT_UCHAR_IF_CHANGED("LoadBl", LoadBl);
+    PREFS_PUT_UCHAR_IF_CHANGED("MainsPhase", MainsPhase);
     PREFS_PUT_USHORT_IF_CHANGED("MaxMains", MaxMains);
     PREFS_PUT_USHORT_IF_CHANGED("MaxSumMains", MaxSumMains);
     PREFS_PUT_USHORT_IF_CHANGED("MaxSumMainsTime", MaxSumMainsTime);
@@ -1628,6 +1637,7 @@ bool handle_URI(struct mg_connection *c, struct mg_http_message *hm,  webServerR
         doc["settings"]["solar_start_current"] = StartCurrent;
         doc["settings"]["solar_stop_time"] = StopTime;
         doc["settings"]["enable_C2"] = StrEnableC2[EnableC2];
+        doc["settings"]["mains_phase"] = MainsPhase;
         doc["settings"]["mains_meter"] = EMConfig[MainsMeter.Type].Desc;
         doc["settings"]["starttime"] = (DelayedStartTime.epoch2 ? DelayedStartTime.epoch2 + EPOCH2_OFFSET : 0);
         doc["settings"]["stoptime"] = (DelayedStopTime.epoch2 ? DelayedStopTime.epoch2 + EPOCH2_OFFSET : 0);
@@ -1779,6 +1789,15 @@ bool handle_URI(struct mg_connection *c, struct mg_http_message *hm,  webServerR
                 doc["current_min"] = MinCurrent;
             } else {
                 doc["current_min"] = "Value not allowed!";
+            }
+        }
+
+        if(request->hasParam("mains_phase")) {
+            int phase = request->getParam("mains_phase")->value().toInt();
+            if(phase >= 0 && phase <= 3) {
+                MainsPhase = (uint8_t) phase;
+                shadowPrefs.markUChar("MainsPhase", &MainsPhase);
+                doc["mains_phase"] = MainsPhase;
             }
         }
 
