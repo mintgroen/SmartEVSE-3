@@ -563,6 +563,8 @@ void HandleModbusRequest(void) {
                         }
                         _LOG_V_NO_FUNC("\n");
                         MainsMeter.CalcImeasured();
+                        phasesLastUpdate = time(NULL);
+                        phasesLastUpdateFlag = true;
                     }
 
                     if (LoadBl == 9) {
