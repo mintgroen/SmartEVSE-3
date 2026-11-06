@@ -391,6 +391,7 @@ void Meter::UpdateEnergies() {
     Energy = Import_active_energy - Export_active_energy;
     if (ResetKwh == 2) EnergyMeterStart = Energy;                               // At powerup, set Energy to kwh meter value
     EnergyCharged = Energy - EnergyMeterStart;                                  // Calculate Energy
+    if (EnergyCharged < 0) EnergyCharged = 0;
 #if MODEM
     RecomputeSoC();
 #endif //MODEM
@@ -558,7 +559,7 @@ void Meter::ResponseToMeasurement(ModBus MB) {
         } else if (MB.Register == EMConfig[Type].PRegister) {
             PowerMeasured = receivePowerMeasurement(MB.Data);
             UpdatePower();
-        } else if (MB.Register == EMConfig[Type].ERegister) {
+        } else if (EMConfig[Type].ERegister && MB.Register == EMConfig[Type].ERegister) {
             //import active energy
             if (Type == EM_EASTRON3P_INV)
                 Export_active_energy = receiveEnergyMeasurement(MB.Data);
@@ -567,7 +568,7 @@ void Meter::ResponseToMeasurement(ModBus MB) {
                 if (Address == MainsMeter.Address) UpdateCapacity();
             }
             UpdateEnergies();
-        } else if (MB.Register == EMConfig[Type].ERegister_Exp) {
+        } else if (EMConfig[Type].ERegister_Exp && MB.Register == EMConfig[Type].ERegister_Exp) {
             //export active energy
             if (Type == EM_EASTRON3P_INV) {
                 Import_active_energy = receiveEnergyMeasurement(MB.Data);

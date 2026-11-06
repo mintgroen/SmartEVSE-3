@@ -280,6 +280,8 @@ void ModbusDecode(uint8_t * buf, uint8_t len) {
                 if (MB.Address == MB.RequestAddress && MB.Function == MB.RequestFunction) {
                     if (MB.Function == 0x03 || MB.Function == 0x04) 
                         MB.Register = MB.RequestRegister;
+                } else {
+                    MB.Type = MODBUS_INVALID;
                 }
                 MB.RequestAddress = 0;
                 MB.RequestFunction = 0;
